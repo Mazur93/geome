@@ -18,3 +18,5 @@ The following functionalities will be included
 - centroid (TODO)
 - interpolate a point along line (TODO)
 - create geometric data types from WKT (well-known text) (TODO)
+- distance matrix for points (TODO)
+- point grid creation (TODO)

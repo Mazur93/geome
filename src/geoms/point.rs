@@ -105,4 +105,5 @@ mod tests {
         let result = Point::from_WKT("POINT (34, 2)");
         assert!(result.is_err());
     }
+    // tests with distance and rotate
 }
