@@ -1,7 +1,8 @@
 use regex::Regex;
 
-// Struct for a 2D Point
+
 #[derive(Debug)]
+/// Struct for a 2D Point
 pub struct Point {
    /// x coordinate of the point
    x: f64,
@@ -29,7 +30,7 @@ impl Point {
     Ok(Point { x, y })
     }
 
-    /// pub get WKT (well-known text) representation of a 2D point
+    /// get WKT (well-known text) representation of a 2D point
     pub fn to_wkt(&self) -> String {
         return format!("POINT ({} {})", self.x, self.y);
     } 
@@ -47,8 +48,9 @@ impl Point {
         todo!()
     }
     /// calculate the 2D distance to another point
-    pub fn distance2D(&self, another: Point) -> f64 {
-        todo!()
+    pub fn distance2D(&self, another: &Point) -> f64 {
+        ((self.x - another.x).powi(2) + (self.y - another.y).powi(2)).sqrt()
+        //todo!()
     }
 }
 
@@ -148,6 +150,46 @@ mod tests {
     fn test_to_wkt_other_point() {
         let orig = Point::new(-9.4874, 67598.58548);
         assert_eq!("POINT (-9.4874 67598.58548)", orig.to_wkt());
+    }
+
+    // tests for distance calculations
+#[test]
+    fn test_distance_positive_coords() {
+        let p1 = Point { x: 1.0, y: 2.0 };
+        let p2 = Point { x: 4.0, y: 6.0 };
+        let dist = p1.distance2D(&p2);
+        assert!((dist - 5.0).abs() < 1e-10); // Expected distance: 5.0
+    }
+
+    #[test]
+    fn test_distance_negative_coords() {
+        let p1 = Point { x: -1.0, y: -2.0 };
+        let p2 = Point { x: -4.0, y: -6.0 };
+        let dist = p1.distance2D(&p2);
+        assert!((dist - 5.0).abs() < 1e-10); // Expected distance: 5.0
+    }
+
+    #[test]
+    fn test_distance_same_point() {
+        let p = Point { x: 3.14, y: 2.71 };
+        let dist = p.distance2D(&p);
+        assert!((dist - 0.0).abs() < 1e-10); // Expected distance: 0.0
+    }
+
+    #[test]
+    fn test_distance_x_axis_aligned() {
+        let p1 = Point { x: 0.0, y: 0.0 };
+        let p2 = Point { x: 0.0, y: 5.0 };
+        let dist = p1.distance2D(&p2);
+        assert!((dist - 5.0).abs() < 1e-10); // Expected distance: 5.0
+    }
+
+    #[test]
+    fn test_distance_y_axis_aligned() {
+        let p1 = Point { x: 76.54, y: 850.0 };
+        let p2 = Point { x: 98.213213, y: 850.0 };
+        let dist = p1.distance2D(&p2);
+        assert!((dist - 21.673213).abs() < 1e-10); // Expected distance: 5.0
     }
 
     // tests with distance and rotate
