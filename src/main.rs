@@ -1,6 +1,7 @@
 mod geoms;
 //use geoms::Point;
 use geoms::point::Point;
+use geoms::line::Line;
 
 fn main() {
     println!("Hello!");
@@ -12,5 +13,6 @@ fn main() {
     let x = b_point.get_x(); 
     let y = b_point.get_y(); 
     println!("{}", b_point.to_wkt());
+    //let gh = Li
 
 }

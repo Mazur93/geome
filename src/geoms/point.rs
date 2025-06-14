@@ -1,12 +1,12 @@
 use regex::Regex;
 
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 /// Struct for a 2D Point
 pub struct Point {
-   /// x coordinate of the point
-   x: f64,
-   /// y coordinate of the point
+    /// x coordinate of the point
+    x: f64,
+    /// y coordinate of the point
     y: f64,
 }
 
@@ -50,7 +50,6 @@ impl Point {
     /// calculate the 2D distance to another point
     pub fn distance2D(&self, another: &Point) -> f64 {
         ((self.x - another.x).powi(2) + (self.y - another.y).powi(2)).sqrt()
-        //todo!()
     }
 }
 
