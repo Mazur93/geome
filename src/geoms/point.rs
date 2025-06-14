@@ -32,7 +32,7 @@ impl Point {
 
     /// get WKT (well-known text) representation of a 2D point
     pub fn to_wkt(&self) -> String {
-        return format!("POINT ({} {})", self.x, self.y);
+        format!("POINT ({} {})", self.x, self.y)
     } 
 
     /// get the x coordinate of the point

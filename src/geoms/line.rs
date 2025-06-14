@@ -49,12 +49,12 @@ impl Line {
     
     /// get WKT (well-known text) representation of a 2D point
     pub fn to_wkt(&self) -> String {
-        return format!("LINESTRING ({})",
+        format!("LINESTRING ({})",
             self.points.iter()
             .map(|p| format!("{} {}", p.get_x(), p.get_y()))
             .collect::<Vec<String>>()
             .join(", ")
-        );
+        )
     } 
 
     /// create Line from WKT
@@ -76,6 +76,16 @@ impl Line {
     pub fn interpolate_line_percentage(&self, percentange:f64) -> Option<Point> {
         todo!()
     }
+
+    /// Calculate the bounding box of the line
+    pub fn bounding_box(&self) -> (Point, Point) {
+        todo!()
+    }
+    /// Split the line into two parts at a given distance from the start
+    pub fn split_at_distance(&self, distance: f64) -> Option<(Line, Line)> {
+        todo!()
+    }
+    
 }
 
 
