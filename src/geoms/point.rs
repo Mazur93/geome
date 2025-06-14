@@ -151,6 +151,12 @@ mod tests {
         assert_eq!("POINT (-9.4874 67598.58548)", orig.to_wkt());
     }
 
+    #[test]
+    fn test_to_wkt_other_point2() {
+        let orig = Point::new(2.0, 67598.58548);
+        assert_eq!("POINT (2 67598.58548)", orig.to_wkt());
+    }
+
     // tests for distance calculations
 #[test]
     fn test_distance_positive_coords() {

@@ -49,7 +49,12 @@ impl Line {
     
     /// get WKT (well-known text) representation of a 2D point
     pub fn to_wkt(&self) -> String {
-        todo!()
+        return format!("LINESTRING ({})",
+            self.points.iter()
+            .map(|p| format!("{} {}", p.get_x(), p.get_y()))
+            .collect::<Vec<String>>()
+            .join(", ")
+        );
     } 
 
     /// create Line from WKT
@@ -173,14 +178,27 @@ mod tests {
     }
 
     #[test]
-    fn test_to_wkt() {
+    fn test_to_wkt_two_points() {
         let points = vec![
             Point::new(0.0, 0.0),
             Point::new(1.0, 1.0),
         ];
         let line = Line::new(points);
         let wkt = line.to_wkt();
-        assert_eq!(wkt, "LINESTRING (0.0 0.0, 1.0 1.0)");
+        assert_eq!(wkt, "LINESTRING (0 0, 1 1)");
+    }
+
+    #[test]
+    fn test_to_wkt_four_points() {
+        let points = vec![
+            Point::new(0.0, 0.0),
+            Point::new(1.0, 1.0),
+            Point::new(-34.2,45.21),
+            Point::new(12.021, -1.74),
+        ];
+        let line = Line::new(points);
+        let wkt = line.to_wkt();
+        assert_eq!(wkt, "LINESTRING (0 0, 1 1, -34.2 45.21, 12.021 -1.74)");
     }
 
     #[test]
