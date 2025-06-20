@@ -43,9 +43,27 @@ impl Point {
     pub fn get_y(&self) -> f64 {
         self.y
     }
-    /// rotate the point around another point by an angle 
-    pub fn rotate(&mut self, rotation_center: Point, angle: f64) {
-        todo!()
+    /// rotate the point around another point by an angle. Positive angles are counter-clockwise and negative angles are clockwise.
+    /// The angle can be given in degrees or radians, depending on the `use_radians` parameter.
+    pub fn rotate(&mut self, rotation_center: &Point, angle: f64, use_radians: bool) {
+        // Check if the angle is in radians or degrees, set cosine and sine 
+        let theta = if use_radians { angle } else { angle.to_radians() };
+        let cos_theta = theta.cos();
+        let sin_theta = theta.sin();
+
+        // Translate point to origin
+        let dx = self.x - rotation_center.x;
+        let dy = self.y - rotation_center.y;
+
+        // Apply rotation
+        let x_new = dx * cos_theta - dy * sin_theta;
+        let y_new = dx * sin_theta + dy * cos_theta;
+
+        // Translate back
+        self.x = rotation_center.x + x_new;
+        self.y = rotation_center.y + y_new;
+
+
     }
     /// calculate the 2D distance to another point
     pub fn distance2D(&self, another: &Point) -> f64 {
@@ -56,6 +74,8 @@ impl Point {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const EPS: f64 = 1e-10;
 
     #[test]
     fn test_creation_origin() {
@@ -163,7 +183,7 @@ mod tests {
         let p1 = Point { x: 1.0, y: 2.0 };
         let p2 = Point { x: 4.0, y: 6.0 };
         let dist = p1.distance2D(&p2);
-        assert!((dist - 5.0).abs() < 1e-10); // Expected distance: 5.0
+        assert!((dist - 5.0).abs() < EPS); // Expected distance: 5.0
     }
 
     #[test]
@@ -171,14 +191,14 @@ mod tests {
         let p1 = Point { x: -1.0, y: -2.0 };
         let p2 = Point { x: -4.0, y: -6.0 };
         let dist = p1.distance2D(&p2);
-        assert!((dist - 5.0).abs() < 1e-10); // Expected distance: 5.0
+        assert!((dist - 5.0).abs() < EPS); // Expected distance: 5.0
     }
 
     #[test]
     fn test_distance_same_point() {
         let p = Point { x: 3.14, y: 2.71 };
         let dist = p.distance2D(&p);
-        assert!((dist - 0.0).abs() < 1e-10); // Expected distance: 0.0
+        assert!((dist - 0.0).abs() < EPS); // Expected distance: 0.0
     }
 
     #[test]
@@ -186,7 +206,7 @@ mod tests {
         let p1 = Point { x: 0.0, y: 0.0 };
         let p2 = Point { x: 0.0, y: 5.0 };
         let dist = p1.distance2D(&p2);
-        assert!((dist - 5.0).abs() < 1e-10); // Expected distance: 5.0
+        assert!((dist - 5.0).abs() < EPS); // Expected distance: 5.0
     }
 
     #[test]
@@ -194,8 +214,86 @@ mod tests {
         let p1 = Point { x: 76.54, y: 850.0 };
         let p2 = Point { x: 98.213213, y: 850.0 };
         let dist = p1.distance2D(&p2);
-        assert!((dist - 21.673213).abs() < 1e-10); // Expected distance: 5.0
+        assert!((dist - 21.673213).abs() < EPS); // Expected distance: 5.0
     }
 
-    // tests with distance and rotate
+    // tests rotate
+    #[test]
+    fn test_rotate_zero_angle_degrees() {
+        let mut p1 = Point { x: 1.0, y: 2.0 };
+        let center = Point { x: 0.0, y: 0.0 };
+        p1.rotate(&center, 0.0, false);
+        assert_eq!(p1.x, 1.0);
+        assert_eq!(p1.y, 2.0);
+    }
+
+     #[test]
+    fn test_rotate_zero_angle_radians() {
+        let mut p1 = Point { x: 1.0, y: 2.0 };
+        let center = Point { x: 0.0, y: 0.0 };
+        p1.rotate(&center, -0.0, true);
+        assert_eq!(p1.x, 1.0);
+        assert_eq!(p1.y, 2.0);
+    }
+
+    #[test]
+    fn test_rotate_full_circle_degrees() {
+        let mut p1 = Point { x: 1.0, y: 2.0 };
+        let center = Point { x: 0.0, y: 0.0 };
+        p1.rotate(&center, 360.0, false);
+        assert!((p1.x - 1.0).abs() < EPS);
+        assert!((p1.y - 2.0).abs() < EPS);
+    }
+
+    #[test]
+    fn test_rotate_negative_angle() {
+        let mut p1 = Point { x: 1.0, y: 0.0 };
+        let center = Point { x: 0.0, y: 0.0 };
+        p1.rotate(&center, -90.0, false);
+        assert!((p1.x - 0.0).abs() < EPS);
+        assert!((p1.y + 1.0).abs() < EPS);
+    }
+
+    #[test]
+    fn test_rotate_around_self() {
+        let mut p1 = Point { x: 3.0, y: 4.0 };
+        let center = Point { x: 3.0, y: 4.0 };
+        p1.rotate(&center, 45.0, false);
+        assert_eq!(p1.x, 3.0);
+        assert_eq!(p1.y, 4.0);
+    }
+
+    #[test]
+    fn test_rotate_non_45_multiple_angle() {
+        let mut p1 = Point { x: 2.0, y: 0.0 };
+        let center = Point { x: 0.0, y: 0.0 };
+        p1.rotate(&center, 30.0, false);
+        let expected_x = 2.0 * (30.0f64.to_radians().cos());
+        let expected_y = 2.0 * (30.0f64.to_radians().sin());
+        assert!((p1.x - expected_x).abs() < EPS);
+        assert!((p1.y - expected_y).abs() < EPS);
+    }
+
+    #[test]
+    fn test_arbitrary_angle_123_degrees() {
+        let mut p1 = Point { x: 1.0, y: 0.0 };
+        let center = Point { x: 0.0, y: 0.0 };
+        p1.rotate(&center, 123.0, false);
+        let rad = 123.0f64.to_radians();
+        let expected_x = rad.cos();
+        let expected_y = rad.sin();
+        assert!((p1.x - expected_x).abs() < EPS);
+        assert!((p1.y - expected_y).abs() < EPS);
+    }
+
+    #[test]
+    fn test_arbitrary_center() {
+        let mut p1 = Point { x: 2.0, y: 3.0 };
+        let center = Point { x: 1.0, y: 1.0 };
+        p1.rotate(&center, 90.0, false);
+        // (2,3) around (1,1) by 90°: (x',y') = (1-(y-1), 1+(x-1)) => (-1,2)
+        assert!((p1.x + 1.0).abs() < EPS);
+        assert!((p1.y - 2.0).abs() < EPS);
+    }
+
 }

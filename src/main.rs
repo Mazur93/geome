@@ -15,4 +15,12 @@ fn main() {
     println!("{}", b_point.to_wkt());
     //let gh = Li
 
+    let mut p1 = Point::new(1.0, 0.0);
+    let origin = Point::origin();
+    println!("{:?}", p1);
+    p1.rotate(&origin,278.4857, false);
+    println!("{:?}", p1);
+
+
+
 }
