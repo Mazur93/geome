@@ -1,3 +1,5 @@
+use core::f64;
+
 use super::point::Point;
 
 #[derive(Debug)]
@@ -63,7 +65,7 @@ impl Line {
     }
 
     /// rotate the line around another point by an angle 
-    pub fn rotate(&mut self, rotation_center: Point, angle: f64) {
+    pub fn rotate(&mut self, rotation_center: &Point, angle: f64, use_radians: bool) {
         todo!()
     }
 
@@ -77,9 +79,30 @@ impl Line {
         todo!()
     }
 
-    /// Calculate the bounding box of the line
+    /// Calculate the bounding box of the line. Return a tuple of points, first containing minimum and the secod containing maximum values.
     pub fn bounding_box(&self) -> (Point, Point) {
-        todo!()
+        let mut min_x = f64::INFINITY;
+        let mut min_y = f64::INFINITY;
+
+        let mut max_x = f64::NEG_INFINITY;
+        let mut max_y = f64::NEG_INFINITY;
+
+        for point in &self.points {
+            if point.get_x() < min_x {
+                min_x = point.get_x();
+            }
+            if point.get_y() < min_y {
+                min_y = point.get_y();
+            }
+            if point.get_x() > max_x {
+                max_x = point.get_x();
+            }
+            if point.get_y() > max_y {
+                max_y = point.get_y();
+            }
+        }
+
+        (Point::new(min_x,min_y), Point::new(max_x,max_y))
     }
     /// Split the line into two parts at a given distance from the start
     pub fn split_at_distance(&self, distance: f64) -> Option<(Line, Line)> {
@@ -244,6 +267,33 @@ mod tests {
         let interpolated_point = line.interpolate_line_percentage(0.75).unwrap();
         assert_eq!(interpolated_point.get_x(), 3.0);
         assert_eq!(interpolated_point.get_y(), 0.0);
+    }
+    // test bounding box
+    #[test]
+    fn test_bounding_box_two_points() {
+        let line = Line { points: vec![
+            Point::new(1.0,2.0),
+            Point::new(4.0,6.0),
+            ]};
+        let (min, max) = line.bounding_box();
+        assert_eq!(min.get_x(), 1.0);
+        assert_eq!(min.get_y(), 2.0);
+        assert_eq!(max.get_x(), 4.0);
+        assert_eq!(max.get_y(), 6.0);
+    }
+
+    #[test]
+    fn test_bounding_box_negative_coords() {
+        let line = Line { points: vec![
+            Point::new(-1.0,2.0),
+            Point::new(74.5,-98.0),
+            Point::new(0.0,-4.0),
+            ]};
+        let (min, max) = line.bounding_box();
+        assert_eq!(min.get_x(), -1.0);
+        assert_eq!(min.get_y(), -98.0);
+        assert_eq!(max.get_x(), 74.5);
+        assert_eq!(max.get_y(), 2.0);
     }
 
 }
