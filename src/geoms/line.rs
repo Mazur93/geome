@@ -1,5 +1,5 @@
 use core::f64;
-
+use regex::Regex;
 use super::point::Point;
 
 #[derive(Debug)]
@@ -40,7 +40,7 @@ impl Line {
     }
 
     /// get a copy of the last point of the line
-    pub fn get_last(&self) -> Point {
+    pub fn get_end(&self) -> Point {
         self.points.last().copied().unwrap()
     }
 
@@ -66,7 +66,10 @@ impl Line {
 
     /// rotate the line around another point by an angle 
     pub fn rotate(&mut self, rotation_center: &Point, angle: f64, use_radians: bool) {
-        todo!()
+        //TODO calculate cosine and sine only once per line, not for every point
+        for point in self.points.iter_mut() {
+            point.rotate(rotation_center, angle, use_radians);
+        }        
     }
 
     /// calculate a point at a given distance from the start of the line
@@ -108,6 +111,21 @@ impl Line {
     pub fn split_at_distance(&self, distance: f64) -> Option<(Line, Line)> {
         todo!()
     }
+
+    /// check if intersects with other line
+    pub fn intersects_line(&self, other: Line) -> Self {
+        todo!()
+    }
+
+    /// return intersection point of two lines
+    pub fn intersection_line(&self, other: Line) -> Self {
+        todo!()
+    }
+
+    /// get centroid of the line
+    pub fn centroid(&self) -> Point {
+        todo!()
+    }
     
 }
 
@@ -127,8 +145,8 @@ mod tests {
         assert_eq!(line.get_number_of_points(), 2);
         assert_eq!(line.get_start().get_x(), 0.0);
         assert_eq!(line.get_start().get_y(), 0.0);
-        assert_eq!(line.get_last().get_x(), 1.0);
-        assert_eq!(line.get_last().get_y(), 1.0);
+        assert_eq!(line.get_end().get_x(), 1.0);
+        assert_eq!(line.get_end().get_y(), 1.0);
     }
 
     #[test]
@@ -159,8 +177,8 @@ mod tests {
         assert_eq!(line.get_number_of_points(), 20);
         assert_eq!(line.get_start().get_x(), 0.0);
         assert_eq!(line.get_start().get_y(), 0.0);
-        assert_eq!(line.get_last().get_x(), 19.0);
-        assert_eq!(line.get_last().get_y(), 19.0);
+        assert_eq!(line.get_end().get_x(), 19.0);
+        assert_eq!(line.get_end().get_y(), 19.0);
     }
 
     #[test]
@@ -241,8 +259,8 @@ mod tests {
         assert_eq!(line.get_number_of_points(), 2);
         assert_eq!(line.get_start().get_x(), 0.0);
         assert_eq!(line.get_start().get_y(), 0.0);
-        assert_eq!(line.get_last().get_x(), 1.0);
-        assert_eq!(line.get_last().get_y(), 1.0);
+        assert_eq!(line.get_end().get_x(), 1.0);
+        assert_eq!(line.get_end().get_y(), 1.0);
     }
 
     #[test]
@@ -294,6 +312,21 @@ mod tests {
         assert_eq!(min.get_y(), -98.0);
         assert_eq!(max.get_x(), 74.5);
         assert_eq!(max.get_y(), 2.0);
+    }
+
+    // test rotate
+
+    #[test]
+    fn test_rotate_line_2pts_90deg() {
+        let mut line = Line { points: vec![
+            Point::new(0.0,0.0),
+            Point::new(4.0,0.0),
+            ]};
+        line.rotate(&Point::origin(), 90.0, false);
+        assert!(line.get_start().get_x() < 1e-10);
+        assert!(line.get_start().get_y() < 1e-10);
+        assert!(line.get_end().get_x() < 1e-10);
+        assert_eq!(line.get_end().get_y(), 4.0);
     }
 
 }

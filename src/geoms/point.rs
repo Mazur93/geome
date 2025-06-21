@@ -43,6 +43,16 @@ impl Point {
     pub fn get_y(&self) -> f64 {
         self.y
     }
+
+    /// set the x coordinate of the point
+    pub fn set_x(&mut self, new_x: f64) {
+        self.x = new_x;
+    }
+    /// set the y coordinate of the point
+    pub fn set_y(&mut self, new_y: f64) {
+        self.y = new_y;
+    }
+
     /// rotate the point around another point by an angle. Positive angles are counter-clockwise and negative angles are clockwise.
     /// The angle can be given in degrees or radians, depending on the `use_radians` parameter.
     pub fn rotate(&mut self, rotation_center: &Point, angle: f64, use_radians: bool) {
