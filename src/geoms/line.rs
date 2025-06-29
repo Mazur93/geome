@@ -124,7 +124,18 @@ impl Line {
 
     /// get centroid of the line
     pub fn centroid(&self) -> Point {
-        todo!()
+        let mut centroid_x: f64 = 0.0;
+        let mut centroid_y: f64 = 0.0;
+
+        for point in self.points.iter() {
+            centroid_x += point.get_x();
+            centroid_y += point.get_y();
+        }
+
+        centroid_x = centroid_x / self.points.len() as f64;
+        centroid_y = centroid_y / self.points.len() as f64;
+
+        Point::new(centroid_x, centroid_y)
     }
     
 }
@@ -327,6 +338,31 @@ mod tests {
         assert!(line.get_start().get_y() < 1e-10);
         assert!(line.get_end().get_x() < 1e-10);
         assert_eq!(line.get_end().get_y(), 4.0);
+    }
+
+    // test centroid
+    #[test]
+    fn test_centroid_along_y() {
+        let line = Line::new(vec![
+            Point::new(0.0, 0.0),
+            Point::new(2.0, 0.0),
+            Point::new(4.0, 0.0),
+        ]);
+        let centroid = line.centroid();
+        assert!((centroid.get_x() - 2.0).abs() < 1e-10);
+        assert!((centroid.get_y() - 0.0).abs() < 1e-10);
+    }
+
+#[test]
+    fn test_centroid_diagonal() {
+        let line = Line::new(vec![
+            Point::new(0.0, 0.0),
+            Point::new(1.0, 1.0),
+            Point::new(2.0, 2.0),   
+        ]);
+        let centroid = line.centroid();
+        assert!((centroid.get_x() - 1.0).abs() < 1e-10);
+        assert!((centroid.get_y() - 1.0).abs() < 1e-10);
     }
 
 }
