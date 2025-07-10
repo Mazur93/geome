@@ -1,24 +1,22 @@
+use super::point::Point;
 use core::f64;
 use regex::Regex;
-use super::point::Point;
 
 #[derive(Debug)]
 /// Struct for a 2D Line
 pub struct Line {
     /// points of the line
-    points: Vec<Point>
+    points: Vec<Point>,
 }
 
-
 impl Line {
-
     /// create a line with given points
     pub fn new(points: Vec<Point>) -> Self {
         // check if there are at least two points
         if points.len() < 2 {
             panic!("A line must have at least two points.");
         }
-        Line {points: points}
+        Line { points: points }
     }
 
     /// get the number of points in the line
@@ -28,8 +26,8 @@ impl Line {
     /// get the length of the line
     pub fn get_length(&self) -> f64 {
         let mut length: f64 = 0.0;
-        for i in 0..self.points.len() -1 {
-            length += self.points[i].distance2D(&self.points[i+1]);
+        for i in 0..self.points.len() - 1 {
+            length += self.points[i].distance2D(&self.points[i + 1]);
         }
         length
     }
@@ -48,37 +46,71 @@ impl Line {
     pub fn distance_to_point(&self, point: Point) -> f64 {
         todo!();
     }
-    
+
     /// get WKT (well-known text) representation of a 2D point
     pub fn to_wkt(&self) -> String {
-        format!("LINESTRING ({})",
-            self.points.iter()
-            .map(|p| format!("{} {}", p.get_x(), p.get_y()))
-            .collect::<Vec<String>>()
-            .join(", ")
+        format!(
+            "LINESTRING ({})",
+            self.points
+                .iter()
+                .map(|p| format!("{} {}", p.get_x(), p.get_y()))
+                .collect::<Vec<String>>()
+                .join(", ")
         )
-    } 
-
-    /// create Line from WKT
-    pub fn from_wkt(wkt_string: &str) -> Self {
-        todo!()
     }
 
-    /// rotate the line around another point by an angle 
+    /// create Line from WKT
+    pub fn from_wkt(wkt_string: &str) -> Result<Line, &'static str> {
+        // Regex to match LINESTRING and capture all coordinate pairs
+        // Example match: LINESTRING(1.0 2.0,3.0 4.0,5.0 6.0,7.0 8.0)
+        let re = Regex::new(r"(?i)^LINESTRING\s*\(\s*([^\)]+)\s*\)$")
+            .map_err(|_| "Failed to compile regex")?;
+
+        // Extract coordinate pairs string inside parentheses
+        let coords_str = re
+            .captures(wkt_string)
+            .and_then(|caps| caps.get(1))
+            .map(|m| m.as_str())
+            .ok_or("Invalid WKT format: missing or malformed LINESTRING")?;
+
+        // Split by comma to get individual coordinate pairs
+        let mut points = Vec::new();
+        for pair_str in coords_str.split(',') {
+            let coords: Vec<&str> = pair_str.trim().split_whitespace().collect();
+            if coords.len() != 2 {
+                return Err("Malformed coordinate pair");
+            }
+            let x = coords[0]
+                .parse::<f64>()
+                .map_err(|_| "Invalid X coordinate")?;
+            let y = coords[1]
+                .parse::<f64>()
+                .map_err(|_| "Invalid Y coordinate")?;
+            points.push(Point::new(x, y));
+        }
+
+        if points.len() < 2 {
+            return Err("A LINESTRING must have at least two points");
+        }
+
+        Ok(Line { points })
+    }
+
+    /// rotate the line around another point by an angle
     pub fn rotate(&mut self, rotation_center: &Point, angle: f64, use_radians: bool) {
         //TODO calculate cosine and sine only once per line, not for every point
         for point in self.points.iter_mut() {
             point.rotate(rotation_center, angle, use_radians);
-        }        
+        }
     }
 
     /// calculate a point at a given distance from the start of the line
-    pub fn interpolate_line_distance(&self, distance:f64) -> Option<Point> {
+    pub fn interpolate_line_distance(&self, distance: f64) -> Option<Point> {
         todo!()
     }
 
     /// calculate a point at a given distance (in % between 0 and 1) from the start of the line
-    pub fn interpolate_line_percentage(&self, percentange:f64) -> Option<Point> {
+    pub fn interpolate_line_percentage(&self, percentange: f64) -> Option<Point> {
         todo!()
     }
 
@@ -105,7 +137,7 @@ impl Line {
             }
         }
 
-        (Point::new(min_x,min_y), Point::new(max_x,max_y))
+        (Point::new(min_x, min_y), Point::new(max_x, max_y))
     }
     /// Split the line into two parts at a given distance from the start
     pub fn split_at_distance(&self, distance: f64) -> Option<(Line, Line)> {
@@ -137,21 +169,15 @@ impl Line {
 
         Point::new(centroid_x, centroid_y)
     }
-    
 }
-
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    
     #[test]
     fn line_creation_two_points() {
-        let points = vec![
-            Point::new(0.0, 0.0),
-            Point::new(1.0, 1.0),
-        ];
+        let points = vec![Point::new(0.0, 0.0), Point::new(1.0, 1.0)];
         let line = Line::new(points);
         assert_eq!(line.get_number_of_points(), 2);
         assert_eq!(line.get_start().get_x(), 0.0);
@@ -196,25 +222,25 @@ mod tests {
     fn test_length_diagonal_and_horizontal() {
         let points = vec![
             Point::new(1.5, 2.5),
-            Point::new(4.5, 6.5), // diagonal: sqrt(3^2 + 4^2) = 5
+            Point::new(4.5, 6.5),  // diagonal: sqrt(3^2 + 4^2) = 5
             Point::new(10.5, 6.5), // horizontal: 6.0
         ];
         let line = Line::new(points);
         assert!((line.get_length() - 11.0).abs() < 1e-10);
     }
-    
+
     #[test]
     fn test_length_negative_coordinates() {
         let points = vec![
             Point::new(-2.0, -3.0),
-            Point::new(1.0, 1.0),   // diagonal: 5.0
-            Point::new(1.0, 4.0),   // vertical: 3.0
-            Point::new(-2.0, 4.0),  // horizontal: 3.0
+            Point::new(1.0, 1.0),  // diagonal: 5.0
+            Point::new(1.0, 4.0),  // vertical: 3.0
+            Point::new(-2.0, 4.0), // horizontal: 3.0
         ];
         let line = Line::new(points);
         assert!((line.get_length() - 11.0).abs() < 1e-10);
     }
-    
+
     #[test]
     fn test_length_floating_points() {
         let points = vec![
@@ -228,10 +254,7 @@ mod tests {
 
     #[test]
     fn test_distance_to_point() {
-        let points = vec![
-            Point::new(0.0, 0.0),
-            Point::new(4.0, 0.0),
-        ];
+        let points = vec![Point::new(0.0, 0.0), Point::new(4.0, 0.0)];
         let line = Line::new(points);
         let point = Point::new(2.0, 3.8458);
         let distance = line.distance_to_point(point);
@@ -241,10 +264,7 @@ mod tests {
 
     #[test]
     fn test_to_wkt_two_points() {
-        let points = vec![
-            Point::new(0.0, 0.0),
-            Point::new(1.0, 1.0),
-        ];
+        let points = vec![Point::new(0.0, 0.0), Point::new(1.0, 1.0)];
         let line = Line::new(points);
         let wkt = line.to_wkt();
         assert_eq!(wkt, "LINESTRING (0 0, 1 1)");
@@ -255,7 +275,7 @@ mod tests {
         let points = vec![
             Point::new(0.0, 0.0),
             Point::new(1.0, 1.0),
-            Point::new(-34.2,45.21),
+            Point::new(-34.2, 45.21),
             Point::new(12.021, -1.74),
         ];
         let line = Line::new(points);
@@ -264,22 +284,51 @@ mod tests {
     }
 
     #[test]
-    fn test_from_wkt() {
-        let wkt = "LINESTRING (0.0 0.0, 1.0 1.0)";
-        let line = Line::from_wkt(wkt);
-        assert_eq!(line.get_number_of_points(), 2);
-        assert_eq!(line.get_start().get_x(), 0.0);
-        assert_eq!(line.get_start().get_y(), 0.0);
-        assert_eq!(line.get_end().get_x(), 1.0);
-        assert_eq!(line.get_end().get_y(), 1.0);
+    fn test_from_wkt_valid_positive_coords() {
+        let wkt = "LINESTRING(1.0 2.0, 3.0 4.0, 5.0 6.0, 7.0 8.0)";
+        let result = Line::from_wkt(wkt);
+        assert!(result.is_ok());
+        let line = result.unwrap();
+        assert_eq!(line.get_number_of_points(), 4);
+        assert_eq!(
+            line.points,
+            vec![
+                Point::new(1.0, 2.0),
+                Point::new(3.0, 4.0),
+                Point::new(5.0, 6.0),
+                Point::new(7.0, 8.0)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_from_wkt_valid_negative_coords() {
+        let wkt = "LINESTRING(-1.0 2.0, 3.0 -4.0, -5.0 6.0, 7.0 8.0)";
+        let result = Line::from_wkt(wkt);
+        assert!(result.is_ok());
+        let line = result.unwrap();
+        assert_eq!(line.get_number_of_points(), 4);
+        assert_eq!(
+            line.points,
+            vec![
+                Point::new(-1.0, 2.0),
+                Point::new(3.0, -4.0),
+                Point::new(-5.0, 6.0),
+                Point::new(7.0, 8.0)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_malformed_wkt() {
+        let wkt = "LINESTRING(1.0 2.0, 3.0 4.0, 5.0 6.0, 7.0 8.0"; // Missing closing parenthesis
+        let result = Line::from_wkt(wkt);
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_interpolate_line_distance() {
-        let points = vec![
-            Point::new(0.0, 0.0),
-            Point::new(4.0, 0.0),
-        ];
+        let points = vec![Point::new(0.0, 0.0), Point::new(4.0, 0.0)];
         let line = Line::new(points);
         let interpolated_point = line.interpolate_line_distance(2.0).unwrap();
         assert_eq!(interpolated_point.get_x(), 2.0);
@@ -288,10 +337,7 @@ mod tests {
 
     #[test]
     fn test_interpolate_line_percentage() {
-        let points = vec![
-            Point::new(0.0, 0.0),
-            Point::new(4.0, 0.0),
-        ];
+        let points = vec![Point::new(0.0, 0.0), Point::new(4.0, 0.0)];
         let line = Line::new(points);
         let interpolated_point = line.interpolate_line_percentage(0.75).unwrap();
         assert_eq!(interpolated_point.get_x(), 3.0);
@@ -300,10 +346,9 @@ mod tests {
     // test bounding box
     #[test]
     fn test_bounding_box_two_points() {
-        let line = Line { points: vec![
-            Point::new(1.0,2.0),
-            Point::new(4.0,6.0),
-            ]};
+        let line = Line {
+            points: vec![Point::new(1.0, 2.0), Point::new(4.0, 6.0)],
+        };
         let (min, max) = line.bounding_box();
         assert_eq!(min.get_x(), 1.0);
         assert_eq!(min.get_y(), 2.0);
@@ -313,11 +358,13 @@ mod tests {
 
     #[test]
     fn test_bounding_box_negative_coords() {
-        let line = Line { points: vec![
-            Point::new(-1.0,2.0),
-            Point::new(74.5,-98.0),
-            Point::new(0.0,-4.0),
-            ]};
+        let line = Line {
+            points: vec![
+                Point::new(-1.0, 2.0),
+                Point::new(74.5, -98.0),
+                Point::new(0.0, -4.0),
+            ],
+        };
         let (min, max) = line.bounding_box();
         assert_eq!(min.get_x(), -1.0);
         assert_eq!(min.get_y(), -98.0);
@@ -329,10 +376,9 @@ mod tests {
 
     #[test]
     fn test_rotate_line_2pts_90deg() {
-        let mut line = Line { points: vec![
-            Point::new(0.0,0.0),
-            Point::new(4.0,0.0),
-            ]};
+        let mut line = Line {
+            points: vec![Point::new(0.0, 0.0), Point::new(4.0, 0.0)],
+        };
         line.rotate(&Point::origin(), 90.0, false);
         assert!(line.get_start().get_x() < 1e-10);
         assert!(line.get_start().get_y() < 1e-10);
@@ -353,16 +399,15 @@ mod tests {
         assert!((centroid.get_y() - 0.0).abs() < 1e-10);
     }
 
-#[test]
+    #[test]
     fn test_centroid_diagonal() {
         let line = Line::new(vec![
             Point::new(0.0, 0.0),
             Point::new(1.0, 1.0),
-            Point::new(2.0, 2.0),   
+            Point::new(2.0, 2.0),
         ]);
         let centroid = line.centroid();
         assert!((centroid.get_x() - 1.0).abs() < 1e-10);
         assert!((centroid.get_y() - 1.0).abs() < 1e-10);
     }
-
 }

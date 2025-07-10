@@ -1,5 +1,6 @@
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
 use regex::Regex;
-
 
 #[derive(Debug, Copy, Clone)]
 /// Struct for a 2D Point
@@ -10,12 +11,19 @@ pub struct Point {
     y: f64,
 }
 
+// Implement trait PartialEq
+impl PartialEq for Point {
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+}
+
 impl Point {
     /// create a point with given coordinates
     pub fn new(x: f64, y: f64) -> Point {
         Point { x: x, y: y }
     }
-    
+
     /// create a default point with coordinates x: 0.0 and y: 0.0
     pub fn origin() -> Point {
         Point { x: 0.0, y: 0.0 }
@@ -23,17 +31,27 @@ impl Point {
 
     /// create Point from WKT
     pub fn from_wkt(wkt_string: &str) -> Result<Point, &'static str> {
-    let re = Regex::new(r"(?i)point\s*\(\s*([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\s*\)").unwrap(); // (?i)point\s*\(\s*([+-]?\d*\.?\d+)\s+([+-]?\d*\.?\d+)\s*\)
-    let caps = re.captures(wkt_string.trim()).ok_or("Invalid WKT format")?;
-    let x: f64 = caps.get(1).ok_or("Missing X coordinate")?.as_str().parse().map_err(|_| "Invalid X value")?;
-    let y: f64 = caps.get(2).ok_or("Missing Y coordinate")?.as_str().parse().map_err(|_| "Invalid Y value")?;
-    Ok(Point { x, y })
+        let re = Regex::new(r"(?i)point\s*\(\s*([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\s*\)").unwrap(); // (?i)point\s*\(\s*([+-]?\d*\.?\d+)\s+([+-]?\d*\.?\d+)\s*\)
+        let caps = re.captures(wkt_string.trim()).ok_or("Invalid WKT format")?;
+        let x: f64 = caps
+            .get(1)
+            .ok_or("Missing X coordinate")?
+            .as_str()
+            .parse()
+            .map_err(|_| "Invalid X value")?;
+        let y: f64 = caps
+            .get(2)
+            .ok_or("Missing Y coordinate")?
+            .as_str()
+            .parse()
+            .map_err(|_| "Invalid Y value")?;
+        Ok(Point { x, y })
     }
 
     /// get WKT (well-known text) representation of a 2D point
     pub fn to_wkt(&self) -> String {
         format!("POINT ({} {})", self.x, self.y)
-    } 
+    }
 
     /// get the x coordinate of the point
     pub fn get_x(&self) -> f64 {
@@ -56,8 +74,12 @@ impl Point {
     /// rotate the point around another point by an angle. Positive angles are counter-clockwise and negative angles are clockwise.
     /// The angle can be given in degrees or radians, depending on the `use_radians` parameter.
     pub fn rotate(&mut self, rotation_center: &Point, angle: f64, use_radians: bool) {
-        // Check if the angle is in radians or degrees, set cosine and sine 
-        let theta = if use_radians { angle } else { angle.to_radians() };
+        // Check if the angle is in radians or degrees, set cosine and sine
+        let theta = if use_radians {
+            angle
+        } else {
+            angle.to_radians()
+        };
         let cos_theta = theta.cos();
         let sin_theta = theta.sin();
 
@@ -72,12 +94,38 @@ impl Point {
         // Translate back
         self.x = rotation_center.x + x_new;
         self.y = rotation_center.y + y_new;
-
-
     }
     /// calculate the 2D distance to another point
     pub fn distance2D(&self, another: &Point) -> f64 {
         ((self.x - another.x).powi(2) + (self.y - another.y).powi(2)).sqrt()
+    }
+
+    // TODO implement
+    //pub fn distance_matrix(points_vector: Vec<Point>) {
+
+    /// Generate a vector of n (pseudo) random points given min/max values for x and y. Upper bounds are inclusive (..=).
+    pub fn generate_random_points(
+        n: i32,
+        min_x: f64,
+        min_y: f64,
+        max_x: f64,
+        max_y: f64,
+        seed: u64,
+    ) -> Vec<Point> {
+        // check range validity
+        if min_x > max_x || min_y > max_y {
+            panic!("Range is not valid, min values cannot be greater than max values!")
+        }
+
+        // use a pseudo random generator for reproducible results
+        let mut rng = StdRng::seed_from_u64(seed);
+        let mut vec_pts: Vec<Point> = Vec::with_capacity(n as usize);
+        for _ in 0..n {
+            let x = rng.random_range(min_x..=max_x);
+            let y = rng.random_range(min_y..=max_y);
+            vec_pts.push(Point::new(x, y));
+        }
+        vec_pts
     }
 }
 
@@ -93,12 +141,21 @@ mod tests {
         assert_eq!(result.x, 0.0);
         assert_eq!(result.y, 0.0);
     }
+
+    #[test]
+    fn test_set_x_y() {
+        let mut result = Point::origin();
+        result.set_x(9.0);
+        result.set_y(-3.14);
+        assert_eq!(result.x, 9.0);
+        assert_eq!(result.y, -3.14);
+    }
+
     #[test]
     fn test_get_coords_origin() {
         let result = Point::origin();
-        assert_eq!(result.get_x(),0.0);
-        assert_eq!(result.get_y(),0.0);
-
+        assert_eq!(result.get_x(), 0.0);
+        assert_eq!(result.get_y(), 0.0);
     }
     #[test]
     fn test_creation_new() {
@@ -109,9 +166,8 @@ mod tests {
     #[test]
     fn test_get_coords_new() {
         let result = Point::new(-5.8, 0.657);
-        assert_eq!(result.get_x(),-5.8);
-        assert_eq!(result.get_y(),0.657);
-
+        assert_eq!(result.get_x(), -5.8);
+        assert_eq!(result.get_y(), 0.657);
     }
     #[test]
     fn test_creation_wkt_int() {
@@ -134,13 +190,11 @@ mod tests {
         assert_eq!(result.y, -8.543);
     }
 
-
     #[test]
     fn test_get_coords_wkt() {
         let result = Point::from_wkt("POINT (-3.14 9.1548595)").unwrap();
-        assert_eq!(result.get_x(),-3.14);
-        assert_eq!(result.get_y(),9.1548595);
-
+        assert_eq!(result.get_x(), -3.14);
+        assert_eq!(result.get_y(), 9.1548595);
     }
     #[test]
     fn test_creation_wkt_fail_comma() {
@@ -188,7 +242,7 @@ mod tests {
     }
 
     // tests for distance calculations
-#[test]
+    #[test]
     fn test_distance_positive_coords() {
         let p1 = Point { x: 1.0, y: 2.0 };
         let p2 = Point { x: 4.0, y: 6.0 };
@@ -222,7 +276,10 @@ mod tests {
     #[test]
     fn test_distance_y_axis_aligned() {
         let p1 = Point { x: 76.54, y: 850.0 };
-        let p2 = Point { x: 98.213213, y: 850.0 };
+        let p2 = Point {
+            x: 98.213213,
+            y: 850.0,
+        };
         let dist = p1.distance2D(&p2);
         assert!((dist - 21.673213).abs() < EPS); // Expected distance: 5.0
     }
@@ -237,7 +294,7 @@ mod tests {
         assert_eq!(p1.y, 2.0);
     }
 
-     #[test]
+    #[test]
     fn test_rotate_zero_angle_radians() {
         let mut p1 = Point { x: 1.0, y: 2.0 };
         let center = Point { x: 0.0, y: 0.0 };
@@ -305,5 +362,63 @@ mod tests {
         assert!((p1.x + 1.0).abs() < EPS);
         assert!((p1.y - 2.0).abs() < EPS);
     }
+    // test for == operator
+    #[test]
+    fn test_points_are_equal() {
+        let p1 = Point { x: 1.0, y: 2.0 };
+        let p2 = Point { x: 1.0, y: 2.0 };
+        assert_eq!(p1, p2);
+    }
 
+    #[test]
+    fn test_points_are_not_equal() {
+        let p1 = Point { x: 1.0, y: 2.0 };
+        let p2 = Point { x: 2.0, y: 3.0 };
+        assert_ne!(p1, p2);
+    }
+
+    // test random points generation
+    #[test]
+    fn test_generate_random_points_count_and_bounds() {
+        let n = 100;
+        let min_x = -1.0;
+        let max_x = 5.0;
+        let min_y = -2.0;
+        let max_y = 2.0;
+        let seed = 42;
+
+        let points = Point::generate_random_points(n, min_x, min_y, max_x, max_y, seed);
+
+        assert_eq!(points.len(), n as usize);
+
+        for p in &points {
+            assert!(p.x >= min_x && p.x <= max_x, "x out of bounds: {}", p.x);
+            assert!(p.y >= min_y && p.y <= max_y, "y out of bounds: {}", p.y);
+        }
+    }
+
+    #[test]
+    fn test_generate_random_points_deterministic() {
+        let n = 10;
+        let min_x = -985.123;
+        let max_x = 10.0;
+        let min_y = 0.0;
+        let max_y = 10.0;
+        let seed = 1954;
+
+        let points1 = Point::generate_random_points(n, min_x, min_y, max_x, max_y, seed);
+        let points2 = Point::generate_random_points(n, min_x, min_y, max_x, max_y, seed);
+
+        assert_eq!(
+            points1, points2,
+            "Points generated with the same seed should be equal"
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Range is not valid, min values cannot be greater than max values!")]
+    fn test_generate_random_points_panics_on_invalid_range() {
+        // min_x > max_x triggers the panic
+        Point::generate_random_points(120, 5.0, 0.0, 1.0, 10.0, 154);
+    }
 }

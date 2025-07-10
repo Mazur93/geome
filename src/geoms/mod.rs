@@ -1,8 +1,8 @@
-#![warn(missing_docs)]
-/// Point structure 
-pub mod point;
+/// Line struct
 pub mod line;
-/* possibility to make all geometry types one datatype for functions 
+/// Point struct
+pub mod point;
+/* possibility to make all geometry types one datatype for functions
 pub enum Geometry {
     /// A point geometry
     Point(point::Point),
