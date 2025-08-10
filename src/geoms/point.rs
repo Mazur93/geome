@@ -116,6 +116,8 @@ impl Point {
          results
     }
 
+    
+
     /// Generate a vector of n (pseudo) random points given min/max values for x and y. Upper bounds are inclusive (..=).
     pub fn generate_random_points(
         n: i32,

@@ -6,17 +6,18 @@ This library will provide 2D geometry functionality (3D might be added in the fu
 
 ## Geometric Data Types
 The following geometric data types will be supported:
-- Point (TODO)
-- Line (TODO)
+- Point (DONE)
+- Line (in progress)
 - Polygon (TODO)
 
 ## Functionalities
 The following functionalities will be included 
-- distance between objects (TODO)
+- distance between objects (in progress)
 - intersection between polygons (TODO)
 - within (TODO)
 - centroid (TODO)
 - interpolate a point along line (TODO)
-- create geometric data types from WKT (well-known text) (TODO)
-- distance matrix for points (TODO)
+- create geometric data types from WKT (well-known text) (in progress)
+- distance matrix for points (DONE)
+- (k) nearest neighbor (TODO)
 - point grid creation (TODO)
