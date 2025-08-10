@@ -100,8 +100,21 @@ impl Point {
         ((self.x - another.x).powi(2) + (self.y - another.y).powi(2)).sqrt()
     }
 
-    // TODO implement
-    //pub fn distance_matrix(points_vector: Vec<Point>) {
+    // something like a distance matrix
+    pub fn pairwise_distances(points_vector: &[Point]) -> Vec<Vec<f64>> {
+        let n = points_vector.len();
+        let mut results = vec![vec![0.0; n]; n];
+            
+        for i in 0..(n-1) {
+            let pt_i = &points_vector[i];
+            for j in (i+1)..n{
+                let dist_temp = pt_i.distance2D(&points_vector[j]);
+                    results[i][j] = dist_temp;
+                    results[j][i] = dist_temp;
+            }
+        }
+         results
+    }
 
     /// Generate a vector of n (pseudo) random points given min/max values for x and y. Upper bounds are inclusive (..=).
     pub fn generate_random_points(

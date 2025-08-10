@@ -25,10 +25,15 @@ fn main() {
 
     let start = Instant::now();
 
-    let random_points = Point::generate_random_points(10_000_000, -4.0, -40.87, 12.9, 7043.4, 2);
+    let random_points = Point::generate_random_points(2500, -4.0, -40.87, 12.9, 7043.4, 2);
     let duration = start.elapsed();
-    println!("Execution time: {:?}", duration);
+    println!("Execution time point generation: {:?}", duration);
     for point in &random_points[0..5] {
         println!("{:?}", point);
     }
+    let start = Instant::now();
+    let results = Point::pairwise_distances(&random_points);
+    let duration = start.elapsed();
+    println!("Execution time distance matrix: {:?}", duration);
+    //println!("{:?}", results);
 }
